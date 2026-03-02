@@ -1,6 +1,6 @@
 ---
 name: a-stock-analysis
-description: "A股实时行情与分时量能分析。获取沪深股票实时价格、涨跌、成交量，分析分时量能分布（早盘/尾盘放量）、主力动向（抢筹/出货信号）、涨停封单。支持持仓管理和盈亏分析。Use when: (1) 查询A股实时行情, (2) 分析主力资金动向, (3) 查看分时成交量分布, (4) 管理股票持仓, (5) 分析持仓盈亏。"
+description: "A股实时行情与分时量能分析。获取沪深股票实时价格、涨跌、成交量，分析分时量能分布（早盘/尾盘放量）、主力动向（抢筹/出货信号）、涨停封单。支持股票模糊搜索、持仓管理和盈亏分析。Use when: (1) 查询A股实时行情, (2) 分析主力资金动向, (3) 查看分时成交量分布, (4) 按关键词模糊搜索股票, (5) 管理股票持仓, (6) 分析持仓盈亏。"
 ---
 
 # A股实时行情与分时量能分析
@@ -23,6 +23,19 @@ uv run {baseDir}/scripts/analyze.py 600789 --minute
 
 # JSON输出
 uv run {baseDir}/scripts/analyze.py 600789 --json
+```
+
+### 股票模糊搜索
+
+```bash
+# 按关键词搜索（支持代码、名称、拼音简写）
+uv run {baseDir}/scripts/search.py --keyword "鲁抗"
+
+# 限制返回条数
+uv run {baseDir}/scripts/search.py --keyword "银行" --limit 10
+
+# JSON输出
+uv run {baseDir}/scripts/search.py --keyword "lk" --json
 ```
 
 ### 持仓管理
