@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+cd "$ROOT_DIR"
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "[pre-commit] uv 未安装，无法执行 Ruff 自动格式化与检查。"
+    echo "[pre-commit] 请先安装 uv，或手动执行: uv run --group dev ruff check ."
+    exit 1
+fi
+
+staged_python_files="$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\\.pyi?$' || true)"
+
+if [ -z "$staged_python_files" ]; then
+    echo "[pre-commit] 没有暂存的 Python 文件，跳过 Ruff。"
+    exit 0
+fi
+
+files=()
+while IFS= read -r file; do
+    if [ -n "$file" ]; then
+        files+=("$file")
+    fi
+done <<< "$staged_python_files"
+
+echo "[pre-commit] Ruff format ..."
+uv run --group dev ruff format "${files[@]}"
+
+echo "[pre-commit] Ruff check --fix ..."
+uv run --group dev ruff check --fix "${files[@]}"
+
+echo "[pre-commit] Ruff check ..."
+uv run --group dev ruff check "${files[@]}"
+
+git add "${files[@]}"
+
+echo "[pre-commit] Ruff 检查通过。"

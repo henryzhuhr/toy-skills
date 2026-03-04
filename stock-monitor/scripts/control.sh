@@ -2,8 +2,8 @@
 # Stock Monitor 一键启动脚本
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-LOG_DIR="$HOME/.stock_monitor"
-PID_FILE="$LOG_DIR/monitor.pid"
+MONITOR_DIR="$HOME/.openclaw/skills/stock-monitor"
+PID_FILE="$MONITOR_DIR/monitor.pid"
 
 case "$1" in
     start)
@@ -13,11 +13,23 @@ case "$1" in
         fi
         
         echo "🚀 启动 Stock Monitor 后台进程..."
-        mkdir -p "$LOG_DIR"
-        nohup python3 "$SCRIPT_DIR/monitor_daemon.py" > "$LOG_DIR/monitor.log" 2>&1 &
+        mkdir -p "$MONITOR_DIR"
+        if command -v uv >/dev/null 2>&1; then
+            RUN_CMD=(uv run python)
+            RUN_DESC="uv run python"
+        elif command -v python3 >/dev/null 2>&1; then
+            RUN_CMD=(python3)
+            RUN_DESC="python3"
+        else
+            echo "❌ 未找到 uv 或 python3，无法启动监控进程"
+            exit 1
+        fi
+
+        echo "🐍 使用解释器: $RUN_DESC"
+        nohup "${RUN_CMD[@]}" "$SCRIPT_DIR/monitor_daemon.py" > "$MONITOR_DIR/monitor.log" 2>&1 &
         echo $! > "$PID_FILE"
         echo "✅ 已启动 (PID: $!)"
-        echo "📋 日志: $LOG_DIR/monitor.log"
+        echo "📋 日志: $MONITOR_DIR/monitor.log"
         ;;
         
     stop)
@@ -41,14 +53,14 @@ case "$1" in
         if [ -f "$PID_FILE" ] && kill -0 $(cat "$PID_FILE") 2>/dev/null; then
             echo "✅ 监控运行中 (PID: $(cat $PID_FILE))"
             echo "📋 最近日志:"
-            tail -5 "$LOG_DIR/monitor.log" 2>/dev/null || echo "  暂无日志"
+            tail -5 "$MONITOR_DIR/monitor.log" 2>/dev/null || echo "  暂无日志"
         else
             echo "⏹️  监控未运行"
         fi
         ;;
         
     log)
-        tail -f "$LOG_DIR/monitor.log"
+        tail -f "$MONITOR_DIR/monitor.log"
         ;;
         
     *)

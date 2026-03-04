@@ -182,7 +182,7 @@ def analyze_portfolio():
         total_value += market_value
 
         print(format_realtime(realtime))
-        print(f"\n【持仓盈亏】")
+        print("\n【持仓盈亏】")
         print(f"  成本: {cost:.3f}  持仓: {qty}股")
         print(f"  成本市值: {cost_value:.0f}  当前市值: {market_value:.0f}")
         print(f"  盈亏: {pnl:+.0f} ({pnl_pct:+.2f}%)")

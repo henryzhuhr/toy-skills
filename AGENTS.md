@@ -62,8 +62,30 @@ PR 应包含：
 
 ## Agent 执行约束
 
+### 基本原则
+
 - 修改前先阅读目标文件上下文，避免破坏公开接口
 - 优先做“最小必要变更”，不引入与任务无关的重构
 - 涉及行为变更时，补充最小可运行示例或文档说明
 - 修改完成后，执行相关的单元测试，确保功能正确
 - 修改完成后，至少执行一次单元测试
+
+### 静态检查
+
+每次做完修改后，你需要使用如下的命令对**修改的文件**进行静态检查
+
+```bash
+uv run --group dev ruff format path/to/file.py
+uv run --group dev ruff check --fix path/to/file.py
+uv run --group dev ruff check path/to/file.py
+```
+
+对于出现的问题，你需要修复它们，直到没有问题为止。
+
+### CLI 入口与示例原则
+
+- 优先在 `<skill>/scripts/` 下提供可直接运行的脚本入口（例如：`uv run stock-monitor/scripts/search_stock.py "紫金矿业"`）。
+- `scripts/*.py` 应保持“薄入口”职责：只做参数解析、调用已有函数、输出规范化，不承载复杂业务逻辑。
+- 可复用业务逻辑应下沉到模块目录（如 `stock-monitor/scripts/stock_monitor/`），方便测试与调试。
+- 不新增 `demo/` 或 `examples/` 目录；示例统一通过 `<skill>/scripts/` 下可执行脚本提供。
+- 示例说明写在对应 skill 的 README 中，并给出可直接执行的命令。

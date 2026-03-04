@@ -1,0 +1,32 @@
+// https://github.com/DavidAnson/vscode-markdownlint#configure
+{
+    "MD003": {
+        "style": "consistent"
+    },
+    "MD007": {
+        "indent": 2
+    },
+    "MD010": { // no-hard-tabs
+        "spaces_per_tab": 4
+    },
+    "MD013": false,
+    "MD024": false, // no-duplicate-heading: Multiple headings with the same content
+    "MD033": {
+        // 允许使用的 HTML 标签
+        "allowed_elements": [
+            "span",
+            "style",
+            "sup", // 上标 superscript
+            "del", // 删除线 strikethrough
+            "ins", // 插入/下划线 insert
+            "details", // 详情
+            "summary", // 摘要
+            "mark", // 高亮
+            "abbr", // 缩写
+            "pre", // 预格式化文本
+            "kbd" // 键盘输入
+        ]
+    },
+    "MD040":false,
+    "MD060":false
+}
