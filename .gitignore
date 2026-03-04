@@ -8,6 +8,9 @@ tmps/
 temp/
 temps/
 
+.agent
+.agents/
+
 # ========================
 #   Global/VisualStudioCode.gitignore
 # https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore

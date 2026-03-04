@@ -3,14 +3,24 @@
 # scripts/distribute-skills.sh
 # 这个脚本是为了将 skills 目录下的技能分发到 `.agents/skills` 目录下，供 agent 使用。
 # 1. 遍历 skills 目录下的所有技能，skills 目录满足包含 `SKILL.md` 文件
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+	emulate -L bash
+	setopt KSH_ARRAYS
+fi
+
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 # 目标目录，如果是其他框架，可以将这个路径改为对应框架的技能目录
 TARGET_DIR="$ROOT_DIR/.agents/skills"
 
 SOURCE_SKILLS_DIR="$ROOT_DIR/skills"
+
+if [[ -e "$TARGET_DIR" && ! -d "$TARGET_DIR" ]]; then
+	echo "目标路径已存在且不是目录: $TARGET_DIR"
+	exit 1
+fi
 
 mkdir -p "$TARGET_DIR"
 
@@ -68,7 +78,10 @@ if [[ ${#SKILL_NAMES[@]} -eq 0 ]]; then
 fi
 
 linked_count=0
-for i in "${!SKILL_NAMES[@]}"; do
+skipped_count=0
+conflict_count=0
+
+for ((i=0; i<${#SKILL_NAMES[@]}; i++)); do
 	skill_name="${SKILL_NAMES[$i]}"
 	source_dir="${SKILL_DIRS[$i]}"
 	link_path="$TARGET_DIR/$skill_name"
@@ -79,9 +92,24 @@ for i in "${!SKILL_NAMES[@]}"; do
 		rel_target="../../$skill_name"
 	fi
 
+	if [[ -L "$link_path" ]]; then
+		current_target="$(readlink "$link_path")"
+		if [[ "$current_target" == "$rel_target" ]]; then
+			echo "已存在，跳过: $skill_name -> $rel_target"
+			skipped_count=$((skipped_count + 1))
+			continue
+		fi
+	fi
+
+	if [[ -e "$link_path" && ! -L "$link_path" ]]; then
+		echo "已存在同名非软链接，跳过: $link_path"
+		conflict_count=$((conflict_count + 1))
+		continue
+	fi
+
 	ln -sfn "$rel_target" "$link_path"
 	echo "已分发: $skill_name -> $rel_target"
 	linked_count=$((linked_count + 1))
 done
 
-echo "分发完成，共处理 $linked_count 个技能"
+echo "分发完成，新建/更新 $linked_count 个，跳过重复 $skipped_count 个，冲突 $conflict_count 个"
