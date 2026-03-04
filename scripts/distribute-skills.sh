@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # scripts/distribute-skills.sh
-# 这个脚本是为了将 skills 目录下的技能分发到 `.agents/skills` 目录下，供 agent 使用。
+# 这个脚本是为了将 skills 目录下的技能分发到 `.claude/skills` 目录下，供 agent 使用。
 # 1. 遍历 skills 目录下的所有技能，skills 目录满足包含 `SKILL.md` 文件
 if [[ -n "${ZSH_VERSION:-}" ]]; then
 	emulate -L bash
@@ -13,7 +13,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 # 目标目录，如果是其他框架，可以将这个路径改为对应框架的技能目录
-TARGET_DIR="$ROOT_DIR/.agents/skills"
+TARGET_DIR="$ROOT_DIR/.claude/skills"
 
 SOURCE_SKILLS_DIR="$ROOT_DIR/skills"
 
