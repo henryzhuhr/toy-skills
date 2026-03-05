@@ -1,32 +1,32 @@
-# Overview
+# 概览
 
-> A simple, open format for giving agents new capabilities and expertise.
+> 一种简单、开放的格式，用于为智能体提供新能力与专业知识。
 
-Agent Skills are folders of instructions, scripts, and resources that agents can discover and use to do things more accurately and efficiently.
+Agent Skills 是由说明文档、脚本和资源组成的文件夹，智能体可以发现并使用它们，从而更准确、更高效地完成任务。
 
-## Why Agent Skills?
+## 为什么需要 Agent Skills？
 
-Agents are increasingly capable, but often don't have the context they need to do real work reliably. Skills solve this by giving agents access to procedural knowledge and company-, team-, and user-specific context they can load on demand. Agents with access to a set of skills can extend their capabilities based on the task they're working on.
+智能体能力正在快速增强，但它们往往缺少完成真实工作所需的上下文，因此难以稳定产出。Skills 通过按需提供流程知识，以及公司、团队、用户特定的上下文来解决这个问题。拥有一组 skills 的智能体可以基于当前任务动态扩展能力。
 
-**For skill authors**: Build capabilities once and deploy them across multiple agent products.
+**对于 skill 作者**：一次构建能力，可部署到多个智能体产品。
 
-**For compatible agents**: Support for skills lets end users give agents new capabilities out of the box.
+**对于兼容的智能体**：支持 skills 可让终端用户开箱即用地为智能体增加新能力。
 
-**For teams and enterprises**: Capture organizational knowledge in portable, version-controlled packages.
+**对于团队与企业**：将组织知识沉淀为可移植、可版本控制的能力包。
 
-## What can Agent Skills enable?
+## Agent Skills 可以带来什么？
 
-* **Domain expertise**: Package specialized knowledge into reusable instructions, from legal review processes to data analysis pipelines.
-* **New capabilities**: Give agents new capabilities (e.g. creating presentations, building MCP servers, analyzing datasets).
-* **Repeatable workflows**: Turn multi-step tasks into consistent and auditable workflows.
-* **Interoperability**: Reuse the same skill across different skills-compatible agent products.
+* **领域专业能力**：把专项知识打包成可复用指令，例如法务审查流程或数据分析流水线。
+* **新增能力**：为智能体增加新能力（如创建演示文稿、构建 MCP 服务器、分析数据集）。
+* **可复用工作流**：将多步骤任务固化为一致、可审计的流程。
+* **互操作性**：在不同支持 skills 的智能体产品之间复用同一个 skill。
 
-## Adoption
+## 采用情况
 
-Agent Skills are supported by leading AI development tools.
+Agent Skills 已被主流 AI 开发工具支持。
 
-## Open development
+## 开放发展
 
-The Agent Skills format was originally developed by [Anthropic](https://www.anthropic.com/), released as an open standard, and has been adopted by a growing number of agent products. The standard is open to contributions from the broader ecosystem.
+Agent Skills 格式最初由 [Anthropic](https://www.anthropic.com/) 开发并以开放标准发布，目前已被越来越多的智能体产品采用。该标准对整个生态开放贡献。
 
-[View on GitHub](https://github.com/agentskills/agentskills)
+[在 GitHub 上查看](https://github.com/agentskills/agentskills)

@@ -1,33 +1,32 @@
+# 什么是 skills？
 
-# What are skills?
+> Agent Skills 是一种轻量、开放的格式，用于通过专业知识和工作流扩展 AI 智能体能力。
 
-> Agent Skills are a lightweight, open format for extending AI agent capabilities with specialized knowledge and workflows.
-
-At its core, a skill is a folder containing a `SKILL.md` file. This file includes metadata (`name` and `description`, at minimum) and instructions that tell an agent how to perform a specific task. Skills can also bundle scripts, templates, and reference materials.
+从本质上讲，skill 就是一个包含 `SKILL.md` 文件的文件夹。该文件包含元数据（至少包括 `name` 和 `description`）以及指令，用来告诉智能体如何执行某项特定任务。Skill 也可以打包脚本、模板和参考资料。
 
 ```directory  theme={null}
 my-skill/
-├── SKILL.md          # Required: instructions + metadata
-├── scripts/          # Optional: executable code
-├── references/       # Optional: documentation
-└── assets/           # Optional: templates, resources
+├── SKILL.md          # 必需：说明 + 元数据
+├── scripts/          # 可选：可执行代码
+├── references/       # 可选：文档资料
+└── assets/           # 可选：模板、资源
 ```
 
-## How skills work
+## skills 如何工作
 
-Skills use **progressive disclosure** to manage context efficiently:
+Skills 使用**渐进式披露（progressive disclosure）**来高效管理上下文：
 
-1. **Discovery**: At startup, agents load only the name and description of each available skill, just enough to know when it might be relevant.
+1. **发现（Discovery）**：启动时，智能体只加载每个可用 skill 的名称和描述，仅保留判断是否相关所需的最小信息。
 
-2. **Activation**: When a task matches a skill's description, the agent reads the full `SKILL.md` instructions into context.
+2. **激活（Activation）**：当任务匹配某个 skill 的描述时，智能体将完整的 `SKILL.md` 指令读入上下文。
 
-3. **Execution**: The agent follows the instructions, optionally loading referenced files or executing bundled code as needed.
+3. **执行（Execution）**：智能体遵循指令，按需加载引用文件或执行打包代码。
 
-This approach keeps agents fast while giving them access to more context on demand.
+这种方式让智能体保持高效，同时在需要时获取更多上下文。
 
-## The SKILL.md file
+## `SKILL.md` 文件
 
-Every skill starts with a `SKILL.md` file containing YAML frontmatter and Markdown instructions:
+每个 skill 都从一个 `SKILL.md` 文件开始，文件包含 YAML frontmatter 和 Markdown 指令正文：
 
 ```mdx  theme={null}
 ---
@@ -47,25 +46,25 @@ Use this skill when the user needs to work with PDF files...
 ...
 ```
 
-The following frontmatter is required at the top of `SKILL.md`:
+`SKILL.md` 顶部必须包含以下 frontmatter 字段：
 
-* `name`: A short identifier
-* `description`: When to use this skill
+* `name`：简短标识符
+* `description`：说明何时使用此 skill
 
-The Markdown body contains the actual instructions and has no specific restrictions on structure or content.
+Markdown 正文承载实际指令，对结构和内容没有硬性限制。
 
-This simple format has some key advantages:
+这种简单格式有几个关键优势：
 
-* **Self-documenting**: A skill author or user can read a `SKILL.md` and understand what it does, making skills easy to audit and improve.
+* **自解释**：skill 作者或用户都能通过阅读 `SKILL.md` 理解其作用，便于审计与改进。
 
-* **Extensible**: Skills can range in complexity from just text instructions to executable code, assets, and templates.
+* **可扩展**：skill 复杂度可从纯文本指令扩展到可执行代码、资源和模板。
 
-* **Portable**: Skills are just files, so they're easy to edit, version, and share.
+* **可移植**：skill 本质就是文件，易于编辑、版本管理和分享。
 
-## Next steps
+## 下一步
 
-* [View the specification](/specification) to understand the full format.
-* [Add skills support to your agent](/integrate-skills) to build a compatible client.
-* [See example skills](https://github.com/anthropics/skills) on GitHub.
-* [Read authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) for writing effective skills.
-* [Use the reference library](https://github.com/agentskills/agentskills/tree/main/skills-ref) to validate skills and generate prompt XML.
+* [查看规范](/specification) 以了解完整格式。
+* [为你的智能体接入 skills 支持](/integrate-skills) 以构建兼容客户端。
+* 在 GitHub 查看 [示例 skills](https://github.com/anthropics/skills)。
+* 阅读 [编写最佳实践](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) 以写出高质量 skill。
+* 使用 [参考库](https://github.com/agentskills/agentskills/tree/main/skills-ref) 校验 skill 并生成 prompt XML。

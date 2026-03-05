@@ -1,136 +1,136 @@
-# Using scripts in skills
+# 在 skill 中使用脚本
 
-> How to run commands and bundle executable scripts in your skills.
+> 如何在你的 skill 中运行命令并打包可执行脚本。
 
-Skills can instruct agents to run shell commands and bundle reusable scripts in a `scripts/` directory. This guide covers one-off commands, self-contained scripts with their own dependencies, and how to design script interfaces for agentic use.
+Skill 可以指导智能体运行 shell 命令，也可以在 `scripts/` 目录中打包可复用脚本。本指南涵盖一次性命令、自包含且自带依赖的脚本，以及如何为智能体场景设计脚本接口。
 
-## One-off commands
+## 一次性命令
 
-When an existing package already does what you need, you can reference it directly in your `SKILL.md` instructions without a `scripts/` directory. Many ecosystems provide tools that auto-resolve dependencies at runtime.
+当现有包已经能满足需求时，你可以在 `SKILL.md` 中直接引用，无需建立 `scripts/` 目录。很多生态都提供可在运行时自动解析依赖的工具。
 
 <Tabs sync={false}>
   <Tab title="uvx">
-    [uvx](https://docs.astral.sh/uv/guides/tools/) runs Python packages in isolated environments with aggressive caching. It ships with [uv](https://docs.astral.sh/uv/).
+    [uvx](https://docs.astral.sh/uv/guides/tools/) 在隔离环境中运行 Python 包，并使用激进缓存策略。它随 [uv](https://docs.astral.sh/uv/) 提供。
 
     ```bash  theme={null}
     uvx ruff@0.8.0 check .
     uvx black@24.10.0 .
     ```
 
-    * Not bundled with Python — requires a separate install.
-    * Fast. Caches aggressively so repeat runs are near-instant.
+    * 不随 Python 内置，需要单独安装。
+    * 很快。缓存策略激进，重复运行几乎瞬时完成。
   </Tab>
 
   <Tab title="pipx">
-    [pipx](https://pipx.pypa.io/) runs Python packages in isolated environments. Available via OS package managers (`apt install pipx`, `brew install pipx`).
+    [pipx](https://pipx.pypa.io/) 在隔离环境中运行 Python 包。可通过系统包管理器安装（`apt install pipx`、`brew install pipx`）。
 
     ```bash  theme={null}
     pipx run 'black==24.10.0' .
     pipx run 'ruff==0.8.0' check .
     ```
 
-    * Not bundled with Python — requires a separate install.
-    * A mature alternative to `uvx`. While `uvx` has become the standard recommendation, `pipx` remains a reliable option with broader OS package manager availability.
+    * 不随 Python 内置，需要单独安装。
+    * `uvx` 之外的成熟替代方案。虽然 `uvx` 已成为更常见的推荐，但 `pipx` 依然稳定可靠，且在系统包管理器中的可得性更广。
   </Tab>
 
   <Tab title="npx">
-    [npx](https://docs.npmjs.com/cli/commands/npx) runs npm packages, downloading them on demand. It ships with npm (which ships with Node.js).
+    [npx](https://docs.npmjs.com/cli/commands/npx) 可按需下载并运行 npm 包。它随 npm 提供（npm 随 Node.js 提供）。
 
     ```bash  theme={null}
     npx eslint@9 --fix .
     npx create-vite@6 my-app
     ```
 
-    * Bundled with Node.js — no extra install needed.
-    * Downloads the package, runs it, and caches it for future use.
-    * Pin versions with `npx package@version` for reproducibility.
+    * 随 Node.js 内置，无需额外安装。
+    * 下载包后执行，并缓存以便后续复用。
+    * 使用 `npx package@version` 固定版本，提升可复现性。
   </Tab>
 
   <Tab title="bunx">
-    [bunx](https://bun.sh/docs/cli/bunx) is Bun's equivalent of `npx`. It ships with [Bun](https://bun.sh/).
+    [bunx](https://bun.sh/docs/cli/bunx) 是 Bun 对应 `npx` 的工具，随 [Bun](https://bun.sh/) 提供。
 
     ```bash  theme={null}
     bunx eslint@9 --fix .
     bunx create-vite@6 my-app
     ```
 
-    * Drop-in replacement for `npx` in Bun-based environments.
-    * Only appropriate when the user's environment has Bun rather than Node.js.
+    * 在 Bun 环境中可作为 `npx` 的直接替代。
+    * 仅当用户环境是 Bun 而非 Node.js 时适用。
   </Tab>
 
   <Tab title="deno run">
-    [deno run](https://docs.deno.com/runtime/reference/cli/run/) runs scripts directly from URLs or specifiers. It ships with [Deno](https://deno.com/).
+    [deno run](https://docs.deno.com/runtime/reference/cli/run/) 可直接从 URL 或 specifier 运行脚本。它随 [Deno](https://deno.com/) 提供。
 
     ```bash  theme={null}
     deno run npm:create-vite@6 my-app
     deno run --allow-read npm:eslint@9 -- --fix .
     ```
 
-    * Permission flags (`--allow-read`, etc.) are required for filesystem/network access.
-    * Use `--` to separate Deno flags from the tool's own flags.
+    * 文件系统/网络访问需要显式权限参数（如 `--allow-read`）。
+    * 使用 `--` 将 Deno 参数与工具自身参数分隔开。
   </Tab>
 
   <Tab title="go run">
-    [go run](https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program) compiles and runs Go packages directly. It is built into the `go` command.
+    [go run](https://pkg.go.dev/cmd/go#hdr-Compile_and_run_Go_program) 可直接编译并运行 Go 包，它是 `go` 命令内置能力。
 
     ```bash  theme={null}
     go run golang.org/x/tools/cmd/goimports@v0.28.0 .
     go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0 run
     ```
 
-    * Built into Go — no extra tooling needed.
-    * Pin versions or use `@latest` to make the command explicit.
+    * Go 内置，无需额外工具。
+    * 固定版本或使用 `@latest`，让命令意图更明确。
   </Tab>
 </Tabs>
 
-**Tips for one-off commands in skills:**
+**在 skill 中使用一次性命令的建议：**
 
-* **Pin versions** (e.g., `npx eslint@9.0.0`) so the command behaves the same over time.
-* **State prerequisites** in your `SKILL.md` (e.g., "Requires Node.js 18+") rather than assuming the agent's environment has them. For runtime-level requirements, use the [`compatibility` frontmatter field](/specification#compatibility-field).
-* **Move complex commands into scripts.** A one-off command works well when you're invoking a tool with a few flags. When a command grows complex enough that it's hard to get right on the first try, a tested script in `scripts/` is more reliable.
+* **固定版本**（例如 `npx eslint@9.0.0`），确保命令在时间维度上行为一致。
+* **在 `SKILL.md` 明确前置条件**（例如“需要 Node.js 18+”），不要假设智能体环境一定具备。运行时级别要求可使用 [`compatibility` frontmatter 字段](/specification#compatibility-field)。
+* **复杂命令迁移到脚本**。当你只是调用少量参数的一次性工具时，一条命令就够；当命令复杂到很难一次写对时，放入 `scripts/` 的可测试脚本会更可靠。
 
-## Referencing scripts from `SKILL.md`
+## 从 `SKILL.md` 引用脚本
 
-Use **relative paths from the skill directory root** to reference bundled files. The agent resolves these paths automatically — no absolute paths needed.
+请使用**相对于 skill 根目录**的路径引用打包文件。智能体会自动解析这些路径，不需要绝对路径。
 
-List available scripts in your `SKILL.md` so the agent knows they exist:
+在 `SKILL.md` 列出可用脚本，让智能体知道它们存在：
 
 ```markdown SKILL.md theme={null}
-## Available scripts
+## 可用脚本
 
-- **`scripts/validate.sh`** — Validates configuration files
-- **`scripts/process.py`** — Processes input data
+- **`scripts/validate.sh`** — 校验配置文件
+- **`scripts/process.py`** — 处理输入数据
 ```
 
-Then instruct the agent to run them:
+然后指导智能体运行它们：
 
 ````markdown SKILL.md theme={null}
-## Workflow
+## 工作流
 
-1. Run the validation script:
+1. 运行校验脚本：
    ```bash
    bash scripts/validate.sh "$INPUT_FILE"
    ```
 
-2. Process the results:
+2. 处理结果：
    ```bash
    python3 scripts/process.py --input results.json
    ```
 ````
 
 <Note>
-  The same relative-path convention works in support files like `references/*.md` — script execution paths (in code blocks) are relative to the **skill directory root**, because the agent runs commands from there.
+  同样的相对路径约定也适用于 `references/*.md` 等支持文件。代码块里的脚本执行路径相对于**skill 根目录**，因为智能体会从该目录运行命令。
 </Note>
 
-## Self-contained scripts
+## 自包含脚本
 
-When you need reusable logic, bundle a script in `scripts/` that declares its own dependencies inline. The agent can run the script with a single command — no separate manifest file or install step required.
+当你需要可复用逻辑时，可在 `scripts/` 中打包脚本，并在脚本内声明依赖。这样智能体只需一条命令即可运行，无需单独清单文件或安装步骤。
 
-Several languages support inline dependency declarations:
+多种语言都支持内联依赖声明：
 
 <Tabs sync={false}>
   <Tab title="Python">
-    [PEP 723](https://peps.python.org/pep-0723/) defines a standard format for inline script metadata. Declare dependencies in a TOML block inside `# ///` markers:
+    [PEP 723](https://peps.python.org/pep-0723/) 定义了内联脚本元数据标准。可在 `# ///` 标记包裹的 TOML 区块中声明依赖：
 
     ```python scripts/extract.py theme={null}
     # /// script
@@ -145,21 +145,21 @@ Several languages support inline dependency declarations:
     print(BeautifulSoup(html, "html.parser").select_one("p.info").get_text())
     ```
 
-    Run with [uv](https://docs.astral.sh/uv/) (recommended):
+    推荐用 [uv](https://docs.astral.sh/uv/) 运行：
 
     ```bash  theme={null}
     uv run scripts/extract.py
     ```
 
-    `uv run` creates an isolated environment, installs the declared dependencies, and runs the script. [pipx](https://pipx.pypa.io/) (`pipx run scripts/extract.py`) also supports PEP 723.
+    `uv run` 会创建隔离环境、安装声明的依赖并执行脚本。[pipx](https://pipx.pypa.io/)（`pipx run scripts/extract.py`）同样支持 PEP 723。
 
-    * Pin versions with [PEP 508](https://peps.python.org/pep-0508/) specifiers: `"beautifulsoup4>=4.12,<5"`.
-    * Use `requires-python` to constrain the Python version.
-    * Use `uv lock --script` to create a lockfile for full reproducibility.
+    * 用 [PEP 508](https://peps.python.org/pep-0508/) 规范固定版本：`"beautifulsoup4>=4.12,<5"`。
+    * 用 `requires-python` 约束 Python 版本。
+    * 用 `uv lock --script` 生成锁文件，获得完整可复现性。
   </Tab>
 
   <Tab title="Deno">
-    Deno's `npm:` and `jsr:` import specifiers make every script self-contained by default:
+    Deno 的 `npm:` 与 `jsr:` 导入说明符使脚本默认自包含：
 
     ```typescript scripts/extract.ts theme={null}
     #!/usr/bin/env -S deno run
@@ -175,14 +175,14 @@ Several languages support inline dependency declarations:
     deno run scripts/extract.ts
     ```
 
-    * Use `npm:` for npm packages, `jsr:` for Deno-native packages.
-    * Version specifiers follow semver: `@1.0.0` (exact), `@^1.0.0` (compatible).
-    * Dependencies are cached globally. Use `--reload` to force re-fetch.
-    * Packages with native addons (node-gyp) may not work — packages that ship pre-built binaries work best.
+    * npm 包用 `npm:`，Deno 原生包用 `jsr:`。
+    * 版本说明符遵循 semver：`@1.0.0`（精确）、`@^1.0.0`（兼容）。
+    * 依赖会全局缓存。用 `--reload` 强制重新拉取。
+    * 含原生 addon（node-gyp）的包可能无法工作，更推荐自带预编译二进制的包。
   </Tab>
 
   <Tab title="Bun">
-    Bun auto-installs missing packages at runtime when no `node_modules` directory is found. Pin versions directly in the import path:
+    当找不到 `node_modules` 目录时，Bun 会在运行时自动安装缺失包。可在导入路径中直接固定版本：
 
     ```typescript scripts/extract.ts theme={null}
     #!/usr/bin/env bun
@@ -198,13 +198,13 @@ Several languages support inline dependency declarations:
     bun run scripts/extract.ts
     ```
 
-    * No `package.json` or `node_modules` needed. TypeScript works natively.
-    * Packages are cached globally. First run downloads; subsequent runs are near-instant.
-    * If a `node_modules` directory exists anywhere up the directory tree, auto-install is disabled and Bun falls back to standard Node.js resolution.
+    * 不需要 `package.json` 或 `node_modules`。TypeScript 原生支持。
+    * 包会全局缓存。首次运行下载，后续运行接近瞬时。
+    * 如果目录树任意上级存在 `node_modules`，自动安装会禁用，Bun 将回退到标准 Node.js 解析。
   </Tab>
 
   <Tab title="Ruby">
-    Bundler ships with Ruby since 2.6. Use `bundler/inline` to declare gems directly in the script:
+    Ruby 2.6 起自带 Bundler。可用 `bundler/inline` 直接在脚本中声明 gem：
 
     ```ruby scripts/extract.rb theme={null}
     require 'bundler/inline'
@@ -223,35 +223,35 @@ Several languages support inline dependency declarations:
     ruby scripts/extract.rb
     ```
 
-    * Pin versions explicitly (`gem 'nokogiri', '~> 1.16'`) — there is no lockfile.
-    * An existing `Gemfile` or `BUNDLE_GEMFILE` env var in the working directory can interfere.
+    * 建议显式固定版本（如 `gem 'nokogiri', '~> 1.16'`），因为没有 lockfile。
+    * 工作目录中的 `Gemfile` 或 `BUNDLE_GEMFILE` 环境变量可能造成干扰。
   </Tab>
 </Tabs>
 
-## Designing scripts for agentic use
+## 面向智能体使用场景设计脚本
 
-When an agent runs your script, it reads stdout and stderr to decide what to do next. A few design choices make scripts dramatically easier for agents to use.
+当智能体运行你的脚本时，会读取 stdout 和 stderr 来决定下一步动作。以下设计选择能显著提升脚本可用性。
 
-### Avoid interactive prompts
+### 避免交互式提示
 
-This is a hard requirement of the agent execution environment. Agents operate in non-interactive shells — they cannot respond to TTY prompts, password dialogs, or confirmation menus. A script that blocks on interactive input will hang indefinitely.
+这是智能体执行环境的硬性要求。智能体运行在非交互式 shell 中，无法响应 TTY 提示、密码对话框或确认菜单。若脚本阻塞在交互输入，会无限挂起。
 
-Accept all input via command-line flags, environment variables, or stdin:
+所有输入应通过命令行参数、环境变量或 stdin 提供：
 
 ```
-# Bad: hangs waiting for input
+# 错误：等待输入导致挂起
 $ python scripts/deploy.py
 Target environment: _
 
-# Good: clear error with guidance
+# 正确：给出清晰错误和指导
 $ python scripts/deploy.py
 Error: --env is required. Options: development, staging, production.
 Usage: python scripts/deploy.py --env staging --tag v1.2.3
 ```
 
-### Document usage with `--help`
+### 用 `--help` 说明用法
 
-`--help` output is the primary way an agent learns your script's interface. Include a brief description, available flags, and usage examples:
+`--help` 输出是智能体学习脚本接口的主要方式。应包含简要说明、可用参数和示例：
 
 ```
 Usage: scripts/process.py [OPTIONS] INPUT_FILE
@@ -268,37 +268,37 @@ Examples:
   scripts/process.py --format csv --output report.csv data.csv
 ```
 
-Keep it concise — the output enters the agent's context window alongside everything else it's working with.
+保持简洁，避免占用过多上下文窗口。
 
-### Write helpful error messages
+### 编写有帮助的错误信息
 
-When an agent gets an error, the message directly shapes its next attempt. An opaque "Error: invalid input" wastes a turn. Instead, say what went wrong, what was expected, and what to try:
+当智能体收到错误时，错误信息会直接影响下一次尝试。模糊的“Error: invalid input”会浪费回合。应明确说明出错原因、期望值和下一步建议：
 
 ```
 Error: --format must be one of: json, csv, table.
        Received: "xml"
 ```
 
-### Use structured output
+### 使用结构化输出
 
-Prefer structured formats — JSON, CSV, TSV — over free-form text. Structured formats can be consumed by both the agent and standard tools (`jq`, `cut`, `awk`), making your script composable in pipelines.
+优先使用结构化格式（JSON、CSV、TSV），避免自由文本。结构化输出既可被智能体消费，也可被标准工具（`jq`、`cut`、`awk`）处理，便于管道组合。
 
 ```
-# Whitespace-aligned — hard to parse programmatically
+# 按空白对齐——程序难以解析
 NAME          STATUS    CREATED
 my-service    running   2025-01-15
 
-# Delimited — unambiguous field boundaries
+# 定界格式——字段边界明确
 {"name": "my-service", "status": "running", "created": "2025-01-15"}
 ```
 
-**Separate data from diagnostics:** send structured data to stdout and progress messages, warnings, and other diagnostics to stderr. This lets the agent capture clean, parseable output while still having access to diagnostic information when needed.
+**分离数据与诊断信息：**结构化数据输出到 stdout，进度信息、告警和其他诊断输出到 stderr。这样智能体既能获得可解析结果，也能在需要时获取诊断信息。
 
-### Further considerations
+### 进一步考虑
 
-* **Idempotency.** Agents may retry commands. "Create if not exists" is safer than "create and fail on duplicate."
-* **Input constraints.** Reject ambiguous input with a clear error rather than guessing. Use enums and closed sets where possible.
-* **Dry-run support.** For destructive or stateful operations, a `--dry-run` flag lets the agent preview what will happen.
-* **Meaningful exit codes.** Use distinct exit codes for different failure types (not found, invalid arguments, auth failure) and document them in your `--help` output so the agent knows what each code means.
-* **Safe defaults.** Consider whether destructive operations should require explicit confirmation flags (`--confirm`, `--force`) or other safeguards appropriate to the risk level.
-* **Predictable output size.** Many agent harnesses automatically truncate tool output beyond a threshold (e.g., 10-30K characters), potentially losing critical information. If your script might produce large output, default to a summary or a reasonable limit, and support flags like `--offset` so the agent can request more information when needed. Alternatively, if output is large and not amenable to pagination, require agents to pass an `--output` flag that specifies either an output file or `-` to explicitly opt in to stdout.
+* **幂等性。** 智能体可能重试命令，“不存在则创建”比“创建并在重复时报错”更安全。
+* **输入约束。** 对模糊输入给出明确错误，而不是猜测。尽量使用枚举和封闭集合。
+* **Dry-run 支持。** 对破坏性或有状态操作，提供 `--dry-run` 以便预览。
+* **有意义的退出码。** 为不同失败类型使用不同退出码（未找到、参数错误、鉴权失败），并在 `--help` 中说明，让智能体理解每个码的含义。
+* **安全默认值。** 评估破坏性操作是否需要显式确认参数（`--confirm`、`--force`）或其他风险控制手段。
+* **可预测的输出规模。** 许多智能体执行器会在超过阈值（如 10-30K 字符）时截断输出，可能丢失关键信息。若脚本可能产生大输出，默认给摘要或合理限制，并提供如 `--offset` 之类参数按需获取更多内容。另一种做法是要求智能体显式传入 `--output`，指定输出文件或 `-`，以明确是否写到 stdout。
