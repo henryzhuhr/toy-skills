@@ -73,11 +73,15 @@ class MonitorDaemon:
 
                 if schedule.get("run"):
                     mode = schedule.get("mode", "normal")
-                    stocks_count = len(schedule.get("stocks", []))
+                    stocks_to_check = schedule.get("stocks", WATCHLIST)
+                    stocks_count = len(stocks_to_check)
                     logger.info(f"[{mode}] 扫描 {stocks_count} 只标的...")
 
                     # 执行监控
-                    alerts = self.monitor.run_once(smart_mode=False)  # 已经判断过了
+                    alerts = self.monitor.run_once(
+                        smart_mode=False,
+                        stocks_override=stocks_to_check,
+                    )
 
                     if alerts:
                         logger.info(f"⚠️ 触发 {len(alerts)} 条预警")

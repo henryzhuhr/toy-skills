@@ -53,9 +53,15 @@ class StockAlert:
     def check_alerts(self, stock_config: dict, data: dict) -> tuple[list, str | None]:
         return evaluate_alerts(stock_config, data, self.provider, self.state_store)
 
-    def run_once(self, smart_mode: bool = True) -> list[str]:
+    def run_once(
+        self,
+        smart_mode: bool = True,
+        stocks_override: list[dict] | None = None,
+    ) -> list[str]:
         """执行一轮监控。"""
-        if smart_mode:
+        if stocks_override is not None:
+            stocks_to_check = stocks_override
+        elif smart_mode:
             schedule = self.should_run_now()
             if not schedule.get("run"):
                 return []

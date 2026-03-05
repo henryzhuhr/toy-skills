@@ -135,47 +135,54 @@ def evaluate_alerts(
                     )
                     weights.append(1)
 
-    if stock_type != STOCK_TYPE.GOLD and cfg.get("ma_monitor", True):
+    if stock_type != STOCK_TYPE.GOLD and (
+        cfg.get("ma_monitor", True) or cfg.get("rsi_monitor", True)
+    ):
         ma_data = provider.fetch_ma_data(
             code, 1 if stock_config["market"] == "sh" else 0
         )
         if ma_data:
-            if ma_data.get("golden_cross") and not state_store.alerted_recently(
-                code, "ma_golden"
-            ):
-                alerts.append(
-                    (
-                        "ma_golden",
-                        f"🌟 均线金叉 (MA5¥{ma_data['MA5']:.2f}上穿MA10¥{ma_data['MA10']:.2f})",
+            if cfg.get("ma_monitor", True):
+                if ma_data.get("golden_cross") and not state_store.alerted_recently(
+                    code, "ma_golden"
+                ):
+                    alerts.append(
+                        (
+                            "ma_golden",
+                            f"🌟 均线金叉 (MA5¥{ma_data['MA5']:.2f}上穿MA10¥{ma_data['MA10']:.2f})",
+                        )
                     )
-                )
-                weights.append(3)
+                    weights.append(3)
 
-            if ma_data.get("death_cross") and not state_store.alerted_recently(
-                code, "ma_death"
-            ):
-                alerts.append(
-                    (
-                        "ma_death",
-                        f"⚠️ 均线死叉 (MA5¥{ma_data['MA5']:.2f}下穿MA10¥{ma_data['MA10']:.2f})",
+                if ma_data.get("death_cross") and not state_store.alerted_recently(
+                    code, "ma_death"
+                ):
+                    alerts.append(
+                        (
+                            "ma_death",
+                            f"⚠️ 均线死叉 (MA5¥{ma_data['MA5']:.2f}下穿MA10¥{ma_data['MA10']:.2f})",
+                        )
                     )
-                )
-                weights.append(3)
+                    weights.append(3)
 
-            rsi = ma_data.get("RSI")
-            if rsi:
-                if ma_data.get("RSI_overbought") and not state_store.alerted_recently(
-                    code, "rsi_high"
+            if cfg.get("rsi_monitor", True):
+                rsi = ma_data.get("RSI")
+                if (
+                    rsi is not None
+                    and ma_data.get("RSI_overbought")
+                    and not state_store.alerted_recently(code, "rsi_high")
                 ):
                     alerts.append(("rsi_high", f"🔥 RSI超买 ({rsi})，可能回调"))
                     weights.append(2)
-                elif ma_data.get("RSI_oversold") and not state_store.alerted_recently(
-                    code, "rsi_low"
+                elif (
+                    rsi is not None
+                    and ma_data.get("RSI_oversold")
+                    and not state_store.alerted_recently(code, "rsi_low")
                 ):
                     alerts.append(("rsi_low", f"❄️ RSI超卖 ({rsi})，可能反弹"))
                     weights.append(2)
 
-    if stock_type != STOCK_TYPE.GOLD:
+    if stock_type != STOCK_TYPE.GOLD and cfg.get("gap_monitor", True):
         prev_high = data.get("prev_high", 0)
         prev_low = data.get("prev_low", 0)
         current_open = data.get("open", price)
@@ -191,7 +198,7 @@ def evaluate_alerts(
                 alerts.append(("gap_down", f"⬇️ 向下跳空 {gap_pct:.1f}%"))
                 weights.append(2)
 
-    if cost > 0:
+    if cost > 0 and cfg.get("trailing_stop", True):
         profit_pct = (price - cost) / cost * 100
         if profit_pct >= 10:
             high_since_cost = data.get("high", price)
@@ -201,7 +208,17 @@ def evaluate_alerts(
                 else 0
             )
 
-            if drawdown >= 5 and not state_store.alerted_recently(
+            if drawdown >= 10 and not state_store.alerted_recently(
+                code, "trailing_stop_10"
+            ):
+                alerts.append(
+                    (
+                        "trailing_stop_10",
+                        f"🚨 利润回撤 {drawdown:.1f}%，建议清仓保护利润",
+                    )
+                )
+                weights.append(3)
+            elif drawdown >= 5 and not state_store.alerted_recently(
                 code, "trailing_stop_5"
             ):
                 alerts.append(
@@ -211,13 +228,6 @@ def evaluate_alerts(
                     )
                 )
                 weights.append(2)
-            elif drawdown >= 10 and not state_store.alerted_recently(
-                code, "trailing_stop_10"
-            ):
-                alerts.append(
-                    ("trailing_stop_10", f"🚨 利润回撤 {drawdown:.1f}%，建议清仓止损")
-                )
-                weights.append(3)
 
     level = calculate_alert_level(alerts, weights)
     return alerts, level

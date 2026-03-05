@@ -4,7 +4,7 @@
 
 ## 目录结构
 
-```text
+```bash
 stock-monitor/
 ├── scripts/
 │   ├── monitor.py                # 单次监控扫描
@@ -21,10 +21,6 @@ stock-monitor/
 ## 运行前提
 
 在仓库根目录执行命令（推荐使用 `uv`）：
-
-```bash
-cd /Users/henryzhu/project/toy-skills
-```
 
 ## 1. 关键词搜索股票代码
 

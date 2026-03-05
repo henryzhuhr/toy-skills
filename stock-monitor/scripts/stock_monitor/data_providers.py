@@ -26,6 +26,26 @@ def build_quote_url(market: str, code: str) -> str:
     return build_quote_url_by_symbols([build_quote_symbol(market, code)])
 
 
+def parse_prev_day_range_from_klines(klines: list[str]) -> tuple[float, float] | None:
+    """从东财 K 线数据中解析上一交易日最高/最低价。"""
+    if len(klines) < 2:
+        return None
+
+    prev_parts = klines[-2].split(",")
+    if len(prev_parts) < 5:
+        return None
+
+    try:
+        prev_high = float(prev_parts[3])
+        prev_low = float(prev_parts[4])
+    except (TypeError, ValueError):
+        return None
+
+    if prev_high <= 0 or prev_low <= 0:
+        return None
+    return prev_high, prev_low
+
+
 class MarketDataProvider:
     """行情与技术指标数据提供器。"""
 
@@ -34,6 +54,10 @@ class MarketDataProvider:
         self.session.headers.update({"User-Agent": "Mozilla/5.0"})
         self._volume_cache: dict[tuple[str, int], float] = {}
         self._ma_cache: dict[tuple[str, int], dict] = {}
+        self._prev_day_range_cache: dict[
+            tuple[str, int], tuple[float, float] | None
+        ] = {}
+        self._prev_day_range_warned: set[tuple[str, int]] = set()
 
     def fetch_eastmoney_kline(self, symbol: str, market: int) -> dict | None:
         """获取最新日 K 数据。"""
@@ -57,7 +81,7 @@ class MarketDataProvider:
                 prev_close = float(today[2])
                 if len(klines) >= 2:
                     prev_close = float(klines[-2].split(",")[2])
-                return {
+                payload = {
                     "name": data.get("data", {}).get("name", symbol),
                     "price": float(today[2]),
                     "prev_close": prev_close,
@@ -66,9 +90,52 @@ class MarketDataProvider:
                     "date": today[0],
                     "time": "15:00:00",
                 }
+                prev_day_range = parse_prev_day_range_from_klines(klines)
+                if prev_day_range is not None:
+                    payload["prev_high"] = prev_day_range[0]
+                    payload["prev_low"] = prev_day_range[1]
+                return payload
         except Exception as exc:  # noqa: BLE001
             print(f"东财K线获取失败 {symbol}: {exc}")
         return None
+
+    def fetch_prev_day_range(
+        self, symbol: str, market: int
+    ) -> tuple[float, float] | None:
+        """获取上一交易日最高/最低价，用于跳空缺口判断。"""
+        cache_key = (symbol, market)
+        if cache_key in self._prev_day_range_cache:
+            return self._prev_day_range_cache[cache_key]
+
+        secid = f"{market}.{symbol}"
+        url = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+        params = {
+            "secid": secid,
+            "fields1": "f1,f2,f3,f4,f5,f6",
+            "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
+            "klt": "101",
+            "fqt": "0",
+            "end": "20500101",
+            "lmt": "2",
+        }
+        try:
+            resp = self.session.get(url, params=params, timeout=10)
+            data = resp.json()
+            klines = data.get("data", {}).get("klines", [])
+            prev_day_range = parse_prev_day_range_from_klines(klines)
+            self._prev_day_range_cache[cache_key] = prev_day_range
+            return prev_day_range
+        except Exception as exc:  # noqa: BLE001
+            print(f"获取昨高昨低失败 {symbol}: {exc}")
+            self._prev_day_range_cache[cache_key] = None
+            return None
+
+    def _warn_missing_prev_day_range(self, symbol: str, market: int, name: str) -> None:
+        cache_key = (symbol, market)
+        if cache_key in self._prev_day_range_warned:
+            return
+        self._prev_day_range_warned.add(cache_key)
+        print(f"  {name}: 缺少真实昨高昨低，已跳过跳空缺口规则")
 
     def fetch_volume_ma5(self, symbol: str, market: int) -> float:
         """获取 5 日平均成交量。"""
@@ -162,7 +229,9 @@ class MarketDataProvider:
         results: dict[str, dict] = {}
 
         if stock_list:
-            symbols = [build_quote_symbol(item["market"], item["code"]) for item in stock_list]
+            symbols = [
+                build_quote_symbol(item["market"], item["code"]) for item in stock_list
+            ]
             url = build_quote_url_by_symbols(symbols)
             try:
                 resp = self.session.get(
@@ -191,21 +260,31 @@ class MarketDataProvider:
                             "amount": float(parts[9]),
                             "date": parts[30],
                             "time": parts[31],
-                            "prev_high": float(parts[2]) * 1.02,
-                            "prev_low": float(parts[2]) * 0.98,
                         }
             except Exception as exc:  # noqa: BLE001
                 print(f"实时行情获取失败: {exc}")
 
             for stock in stock_list:
                 code = stock["code"]
+                market = 1 if stock["market"] == "sh" else 0
                 if code not in results or results[code]["price"] <= 0:
-                    kline_data = self.fetch_eastmoney_kline(
-                        code, 1 if stock["market"] == "sh" else 0
-                    )
+                    kline_data = self.fetch_eastmoney_kline(code, market)
                     if kline_data:
                         results[code] = kline_data
                         print(f"  {stock['name']}: 使用日K收盘价 {kline_data['price']}")
+
+                if code not in results or results[code]["price"] <= 0:
+                    continue
+
+                if "prev_high" in results[code] and "prev_low" in results[code]:
+                    continue
+
+                prev_day_range = self.fetch_prev_day_range(code, market)
+                if prev_day_range is not None:
+                    results[code]["prev_high"] = prev_day_range[0]
+                    results[code]["prev_low"] = prev_day_range[1]
+                else:
+                    self._warn_missing_prev_day_range(code, market, stock["name"])
 
         if fx_list:
             url = build_quote_url("fx", "XAU")
