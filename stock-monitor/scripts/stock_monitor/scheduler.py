@@ -5,6 +5,20 @@ from __future__ import annotations
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from .enums import StockMarket
+
+
+def _is_fx_market(raw_market: object) -> bool:
+    try:
+        market = (
+            raw_market
+            if isinstance(raw_market, StockMarket)
+            else StockMarket(str(raw_market).strip().lower())
+        )
+    except ValueError:
+        return False
+    return market == StockMarket.FX
+
 
 def get_schedule(
     watchlist: list[dict],
@@ -27,7 +41,7 @@ def get_schedule(
         return {
             "run": True,
             "mode": "weekend",
-            "stocks": [item for item in watchlist if item.get("market") == "fx"],
+            "stocks": [item for item in watchlist if _is_fx_market(item.get("market"))],
             "interval": 3600,
         }
 
@@ -52,7 +66,7 @@ def get_schedule(
         return {
             "run": True,
             "mode": "night",
-            "stocks": [item for item in watchlist if item.get("market") == "fx"],
+            "stocks": [item for item in watchlist if _is_fx_market(item.get("market"))],
             "interval": 3600,
         }
 

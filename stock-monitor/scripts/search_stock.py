@@ -11,22 +11,19 @@ from __future__ import annotations
 import argparse
 import json
 
+from stock_monitor.enums import StockMarket
 from stock_monitor.search_service import search_stock_by_keyword, to_dict_list
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="通过关键词模糊搜索股票信息")
-    parser.add_argument("keyword", help="关键词，例如 长飞光纤 / 紫金矿业 / 601869")
+    parser.add_argument("keyword", help="关键词，例如 紫金矿业 / 601869")
     parser.add_argument("--limit", type=int, default=10, help="最多返回条数，默认 10")
     parser.add_argument(
-        "--market",
-        choices=["sh", "sz", "hk", "us"],
-        help="按市场过滤",
+        "--market", choices=[m.value for m in StockMarket], help="按市场过滤"
     )
     parser.add_argument(
-        "--json",
-        action="store_true",
-        help="以 JSON 输出（默认是表格文本）",
+        "--json", action="store_true", help="以 JSON 输出（默认是表格文本）"
     )
     return parser.parse_args()
 

@@ -3,20 +3,40 @@
 from __future__ import annotations
 
 import copy
+import importlib.util
 import json
 import os
 from dataclasses import dataclass, field
-from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+try:
+    from .enums import STOCK_TYPE, StockMarket
+except ImportError:
+    _enum_spec = importlib.util.spec_from_file_location(
+        "stock_monitor_enums_compat",
+        Path(__file__).with_name("enums.py"),
+    )
+    if _enum_spec is None or _enum_spec.loader is None:
+        raise ImportError("Cannot load stock_monitor enums module")
+    _enum_module = importlib.util.module_from_spec(_enum_spec)
+    _enum_spec.loader.exec_module(_enum_module)
+    STOCK_TYPE = _enum_module.STOCK_TYPE
+    StockMarket = _enum_module.StockMarket
 
-class STOCK_TYPE(StrEnum):
-    """标的类型。"""
 
-    INDIVIDUAL = "individual"
-    ETF = "etf"
-    GOLD = "gold"
+def _to_stock_market(value: Any, field_name: str = "market") -> StockMarket:
+    if isinstance(value, StockMarket):
+        return value
+
+    try:
+        normalized = str(value).strip().lower()
+        return StockMarket(normalized)
+    except (TypeError, ValueError) as exc:
+        valid_markets = ", ".join(item.value for item in StockMarket)
+        raise ValueError(
+            f"{field_name} 必须是以下之一: {valid_markets}，收到: {value}"
+        ) from exc
 
 
 def _to_float(value: Any, field_name: str) -> float | None:
@@ -121,7 +141,7 @@ class PortfolioItemConfig:
 
     code: str
     name: str
-    market: str
+    market: StockMarket
     type: STOCK_TYPE
     cost: float = 0.0
     alerts: AlertConfig = field(default_factory=AlertConfig)
@@ -164,7 +184,7 @@ class PortfolioItemConfig:
         return cls(
             code=str(raw_item["code"]),
             name=str(raw_item["name"]),
-            market=str(raw_item["market"]),
+            market=_to_stock_market(raw_item["market"]),
             type=stock_type,
             cost=0.0 if cost is None else cost,
             alerts=alerts,
@@ -175,7 +195,7 @@ class PortfolioItemConfig:
         data: dict[str, Any] = {
             "code": self.code,
             "name": self.name,
-            "market": self.market,
+            "market": self.market.value,
             "type": self.type.value,
             "cost": self.cost,
             "alerts": self.alerts.to_dict(),
@@ -195,7 +215,7 @@ _DEFAULT_WATCHLIST_DATA: list[PortfolioItemConfig] = [
     PortfolioItemConfig(
         code="601899",
         name="紫金矿业",
-        market="sh",
+        market=StockMarket.SH,
         type=STOCK_TYPE.INDIVIDUAL,
         cost=0.0,
         alerts=AlertConfig(
@@ -209,7 +229,7 @@ _DEFAULT_WATCHLIST_DATA: list[PortfolioItemConfig] = [
     PortfolioItemConfig(
         code="512400",
         name="有色金属ETF",
-        market="sh",
+        market=StockMarket.SH,
         type=STOCK_TYPE.ETF,
         cost=0.90,
         alerts=AlertConfig(
@@ -223,7 +243,7 @@ _DEFAULT_WATCHLIST_DATA: list[PortfolioItemConfig] = [
     PortfolioItemConfig(
         code="516020",
         name="化工50ETF",
-        market="sh",
+        market=StockMarket.SH,
         type=STOCK_TYPE.ETF,
         cost=0.90,
         alerts=AlertConfig(
@@ -237,7 +257,7 @@ _DEFAULT_WATCHLIST_DATA: list[PortfolioItemConfig] = [
     PortfolioItemConfig(
         code="XAU",
         name="伦敦金(人民币/克)",
-        market="fx",
+        market=StockMarket.FX,
         type=STOCK_TYPE.GOLD,
         cost=4650.0,
         alerts=AlertConfig(

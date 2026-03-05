@@ -9,11 +9,16 @@ from __future__ import annotations
 import argparse
 
 from stock_monitor.data_providers import build_quote_symbol, build_quote_url
+from stock_monitor.enums import StockMarket
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="显示 market+code 的行情请求 URL")
-    parser.add_argument("--market", required=True, choices=["sh", "sz", "fx"])
+    parser.add_argument(
+        "--market",
+        required=True,
+        choices=[market.value for market in StockMarket],
+    )
     parser.add_argument("--code", required=True, help="股票代码，例如 601869")
     return parser.parse_args()
 

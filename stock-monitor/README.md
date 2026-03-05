@@ -28,13 +28,13 @@ stock-monitor/
 
 ```bash
 # 文本表格输出
-uv run python stock-monitor/scripts/search_stock.py "紫金矿业"
+uv run stock-monitor/scripts/search_stock.py "紫金矿业"
 
 # JSON 输出（便于复制/后续处理）
-uv run python stock-monitor/scripts/search_stock.py "长飞光纤" --json
+uv run stock-monitor/scripts/search_stock.py "长飞光纤" --json
 
 # 只看 A 股上交所，最多返回 5 条
-uv run python stock-monitor/scripts/search_stock.py "紫金" --market sh --limit 5
+uv run stock-monitor/scripts/search_stock.py "紫金" --market sh --limit 5
 ```
 
 ## 2. 查看行情请求拼接
@@ -42,7 +42,7 @@ uv run python stock-monitor/scripts/search_stock.py "紫金" --market sh --limit
 用途：确认监控请求如何从 `market+code` 变成接口 URL。
 
 ```bash
-uv run python stock-monitor/scripts/show_quote_request.py --market sh --code 601869
+uv run stock-monitor/scripts/show_quote_request.py --market sh --code 601869
 ```
 
 示例输出：
@@ -58,13 +58,13 @@ uv run python stock-monitor/scripts/show_quote_request.py --market sh --code 601
 
 ```bash
 # 单只分析
-uv run python stock-monitor/scripts/manual_analyse.py --code 002131 --name 利欧股份 --market sz
+uv run stock-monitor/scripts/manual_analyse.py --code 002131 --name 利欧股份 --market sz
 
 # 只输出基础分析（不跑规则）
-uv run python stock-monitor/scripts/manual_analyse.py --code 002131 --no-rules
+uv run stock-monitor/scripts/manual_analyse.py --code 002131 --no-rules
 
 # 手动附加标签（可重复）
-uv run python stock-monitor/scripts/manual_analyse.py \
+uv run stock-monitor/scripts/manual_analyse.py \
   --code 002131 \
   --alert "关注成交量持续性" \
   --alert "娱乐模式：今天看多"
@@ -73,7 +73,7 @@ uv run python stock-monitor/scripts/manual_analyse.py \
 批量分析（自备 JSON 文件）：
 
 ```bash
-uv run python stock-monitor/scripts/manual_analyse.py --batch-file /path/to/stocks.json
+uv run stock-monitor/scripts/manual_analyse.py --batch-file /path/to/stocks.json
 ```
 
 `stocks.json` 示例：
@@ -100,7 +100,7 @@ uv run python stock-monitor/scripts/manual_analyse.py --batch-file /path/to/stoc
 查看所有参数：
 
 ```bash
-uv run python stock-monitor/scripts/manual_analyse.py --help
+uv run stock-monitor/scripts/manual_analyse.py --help
 ```
 
 ## 4. 单次监控扫描
@@ -108,7 +108,7 @@ uv run python stock-monitor/scripts/manual_analyse.py --help
 用途：按当前持仓配置跑一轮监控，立即输出触发预警。
 
 ```bash
-uv run python stock-monitor/scripts/monitor.py
+uv run stock-monitor/scripts/monitor.py
 ```
 
 ## 5. 后台常驻监控
@@ -123,7 +123,7 @@ bash control.sh log
 bash control.sh stop
 ```
 
-备注：`control.sh` 会优先用 `uv run python`，无 `uv` 时回退 `python3`。
+备注：`control.sh` 会优先用 `uv run`，无 `uv` 时回退 `python3`。
 
 ## 6. 分析引擎脚本
 
@@ -132,7 +132,7 @@ bash control.sh stop
 可直接运行内置测试：
 
 ```bash
-uv run python stock-monitor/scripts/analyser.py
+uv run stock-monitor/scripts/analyser.py
 ```
 
 ## 7. 持仓配置文件
@@ -173,7 +173,7 @@ export STOCK_MONITOR_PORTFOLIO_FILE=/tmp/portfolio.json
 依赖问题：
 
 ```bash
-uv run python stock-monitor/scripts/search_stock.py "紫金矿业"
+uv run stock-monitor/scripts/search_stock.py "紫金矿业"
 ```
 
 如果能运行，说明脚本依赖环境正常。

@@ -2,7 +2,19 @@
 
 from __future__ import annotations
 
-from .config import STOCK_TYPE
+from .enums import STOCK_TYPE, StockMarket
+
+
+def _to_eastmoney_market_id(raw_market: object) -> int:
+    try:
+        market = (
+            raw_market
+            if isinstance(raw_market, StockMarket)
+            else StockMarket(str(raw_market).strip().lower())
+        )
+    except ValueError:
+        return 0
+    return 1 if market == StockMarket.SH else 0
 
 
 def calculate_alert_level(
@@ -38,6 +50,9 @@ def evaluate_alerts(
         stock_type = STOCK_TYPE(raw_stock_type)
     except ValueError:
         stock_type = raw_stock_type
+    eastmoney_market = _to_eastmoney_market_id(
+        stock_config.get("market", StockMarket.SZ)
+    )
 
     price = data["price"]
     prev_close = data["prev_close"]
@@ -113,9 +128,7 @@ def evaluate_alerts(
     if stock_type != STOCK_TYPE.GOLD and "volume_surge" in cfg:
         current_volume = data.get("volume", 0)
         if current_volume > 0:
-            ma5_volume = provider.fetch_volume_ma5(
-                code, 1 if stock_config["market"] == "sh" else 0
-            )
+            ma5_volume = provider.fetch_volume_ma5(code, eastmoney_market)
             if ma5_volume > 0:
                 volume_ratio = current_volume / ma5_volume
                 threshold = cfg["volume_surge"]
@@ -138,9 +151,7 @@ def evaluate_alerts(
     if stock_type != STOCK_TYPE.GOLD and (
         cfg.get("ma_monitor", True) or cfg.get("rsi_monitor", True)
     ):
-        ma_data = provider.fetch_ma_data(
-            code, 1 if stock_config["market"] == "sh" else 0
-        )
+        ma_data = provider.fetch_ma_data(code, eastmoney_market)
         if ma_data:
             if cfg.get("ma_monitor", True):
                 if ma_data.get("golden_cross") and not state_store.alerted_recently(

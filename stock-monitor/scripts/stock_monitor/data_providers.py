@@ -6,14 +6,33 @@ from datetime import datetime
 
 import requests
 
+from .enums import StockMarket
 from .indicators import calculate_rsi
 
 
-def build_quote_symbol(market: str, code: str) -> str:
+def _to_stock_market(
+    raw_market: object,
+    *,
+    default: StockMarket = StockMarket.SZ,
+) -> StockMarket:
+    if isinstance(raw_market, StockMarket):
+        return raw_market
+    try:
+        return StockMarket(str(raw_market).strip().lower())
+    except ValueError:
+        return default
+
+
+def _to_eastmoney_market_id(raw_market: object) -> int:
+    return 1 if _to_stock_market(raw_market) == StockMarket.SH else 0
+
+
+def build_quote_symbol(market: StockMarket | str, code: str) -> str:
     """构造新浪行情 symbol。"""
-    if market == "fx":
+    normalized_market = _to_stock_market(market)
+    if normalized_market == StockMarket.FX:
         return "hf_XAU"
-    return f"{market}{code}"
+    return f"{normalized_market.value}{code}"
 
 
 def build_quote_url_by_symbols(symbols: list[str]) -> str:
@@ -21,7 +40,7 @@ def build_quote_url_by_symbols(symbols: list[str]) -> str:
     return f"https://hq.sinajs.cn/list={','.join(symbols)}"
 
 
-def build_quote_url(market: str, code: str) -> str:
+def build_quote_url(market: StockMarket | str, code: str) -> str:
     """按 market+code 构造新浪行情 URL。"""
     return build_quote_url_by_symbols([build_quote_symbol(market, code)])
 
@@ -224,13 +243,22 @@ class MarketDataProvider:
 
     def fetch_sina_realtime(self, stocks: list[dict]) -> dict[str, dict]:
         """获取实时行情（实时优先，收盘后回退到日 K）。"""
-        stock_list = [item for item in stocks if item.get("market") != "fx"]
-        fx_list = [item for item in stocks if item.get("market") == "fx"]
+        stock_list = [
+            item
+            for item in stocks
+            if _to_stock_market(item.get("market")) != StockMarket.FX
+        ]
+        fx_list = [
+            item
+            for item in stocks
+            if _to_stock_market(item.get("market")) == StockMarket.FX
+        ]
         results: dict[str, dict] = {}
 
         if stock_list:
             symbols = [
-                build_quote_symbol(item["market"], item["code"]) for item in stock_list
+                build_quote_symbol(item.get("market", StockMarket.SZ), item["code"])
+                for item in stock_list
             ]
             url = build_quote_url_by_symbols(symbols)
             try:
@@ -266,7 +294,7 @@ class MarketDataProvider:
 
             for stock in stock_list:
                 code = stock["code"]
-                market = 1 if stock["market"] == "sh" else 0
+                market = _to_eastmoney_market_id(stock.get("market", StockMarket.SZ))
                 if code not in results or results[code]["price"] <= 0:
                     kline_data = self.fetch_eastmoney_kline(code, market)
                     if kline_data:
@@ -287,7 +315,7 @@ class MarketDataProvider:
                     self._warn_missing_prev_day_range(code, market, stock["name"])
 
         if fx_list:
-            url = build_quote_url("fx", "XAU")
+            url = build_quote_url(StockMarket.FX, "XAU")
             try:
                 resp = self.session.get(
                     url,

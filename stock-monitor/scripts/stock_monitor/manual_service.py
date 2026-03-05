@@ -7,7 +7,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .config import STOCK_TYPE, WATCHLIST
+from .config import WATCHLIST
+from .enums import STOCK_TYPE, StockMarket
 from .rules import evaluate_alerts
 
 
@@ -17,6 +18,15 @@ class NoDedupState:
     def alerted_recently(self, code: str, alert_type: str) -> bool:
         _ = (code, alert_type)
         return False
+
+
+def _normalize_market(raw_market: object) -> StockMarket:
+    if isinstance(raw_market, StockMarket):
+        return raw_market
+    try:
+        return StockMarket(str(raw_market).strip().lower())
+    except ValueError:
+        return StockMarket.SZ
 
 
 def build_default_alerts(stock_type: str) -> dict[str, Any]:
@@ -70,10 +80,11 @@ def normalize_stock_input(
 
     existing = find_in_watchlist(code, watchlist=watchlist)
     if existing:
+        existing["market"] = _normalize_market(existing.get("market", StockMarket.SZ))
         if raw.get("name"):
             existing["name"] = raw["name"]
         if raw.get("market"):
-            existing["market"] = raw["market"]
+            existing["market"] = _normalize_market(raw["market"])
         if raw.get("type"):
             existing["type"] = raw["type"]
         if raw.get("cost") is not None:
@@ -81,7 +92,7 @@ def normalize_stock_input(
         return existing
 
     stock_type = str(raw.get("type") or STOCK_TYPE.INDIVIDUAL.value)
-    market = str(raw.get("market") or "sz")
+    market = _normalize_market(raw.get("market") or StockMarket.SZ)
 
     return {
         "code": code,

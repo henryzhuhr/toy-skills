@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from .config import STOCK_TYPE, WATCHLIST
+from .config import WATCHLIST
 from .data_providers import MarketDataProvider
+from .enums import STOCK_TYPE
 from .notifier import format_alert_message
 from .rules import evaluate_alerts
 from .scheduler import get_schedule
@@ -13,7 +14,7 @@ from .state_store import AlertStateStore
 
 
 class StockAlert:
-    """监控引擎主类。"""
+    """监控引擎主类"""
 
     def __init__(self):
         self.prev_data: dict = {}

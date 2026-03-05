@@ -12,7 +12,6 @@ from stock_monitor import StockAlert
 from stock_monitor.config import (
     DEFAULT_WATCHLIST,
     PORTFOLIO_FILE,
-    STOCK_TYPE,
     WATCHLIST,
     AlertConfig,
     PortfolioItemConfig,
@@ -21,12 +20,14 @@ from stock_monitor.config import (
     parse_watchlist,
     serialize_watchlist,
 )
+from stock_monitor.enums import STOCK_TYPE, StockMarket
 
 __all__ = [
     "AlertConfig",
     "DEFAULT_WATCHLIST",
     "PORTFOLIO_FILE",
     "STOCK_TYPE",
+    "StockMarket",
     "PortfolioItemConfig",
     "WATCHLIST",
     "StockAlert",

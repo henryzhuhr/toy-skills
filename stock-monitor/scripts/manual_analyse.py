@@ -13,6 +13,7 @@ from pathlib import Path
 
 from analyser import StockAnalyser
 from monitor import StockAlert
+from stock_monitor.enums import STOCK_TYPE, StockMarket
 from stock_monitor.manual_service import (
     analyse_stock_text,
     load_batch_configs,
@@ -28,14 +29,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--name", help="股票名称（可选）")
     parser.add_argument(
         "--market",
-        choices=["sh", "sz", "fx"],
+        choices=[market.value for market in StockMarket],
         help="市场（可选，默认自动）",
     )
     parser.add_argument(
         "--type",
         dest="stock_type",
-        choices=["individual", "etf", "gold"],
-        help="标的类型（可选，默认 individual）",
+        choices=[e.value for e in STOCK_TYPE],
+        help=f"标的类型（可选，默认 {STOCK_TYPE.INDIVIDUAL.value}）",
     )
     parser.add_argument("--cost", type=float, default=None, help="持仓成本（可选）")
     parser.add_argument(
